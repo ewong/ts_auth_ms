@@ -1,0 +1,18 @@
+{
+  "type": "postgres",
+  "host": "localhost",
+  "username": "",
+  "password": "",
+  "database": "db_dev",
+  "synchronize": true,
+  "logging": false,
+  "entities": [
+     "src/entity/**/*.ts"
+  ],
+  "migrations": [
+     "src/migration/**/*.ts"
+  ],
+  "subscribers": [
+     "src/subscriber/**/*.ts"
+  ]
+}
