@@ -1,16 +1,19 @@
 import { Request, Response } from 'express';
 import { buildSchema } from 'graphql';
 import User from '../entity/user';
+import Result from '../model/result';
+import { JWT, JWTActionType } from '../utils/jwt';
 
 export const schema = buildSchema(`
   type Query {
-    profile(ukey: String!): Profile
+    profile: Profile
   }
 
   type Mutation {
     register(email: String!, password: String!, confirmation: String!): RegisteredUser
     login(email: String!, password: String!): AccessToken
     confirm(email: String!): Boolean
+    refresh: AccessToken
   }
 
   type Profile {
@@ -80,3 +83,36 @@ export const root = {
     return user;
   },
 };
+
+function parseAccessToken(req: Request): Result<any> {
+  const authHeader = req.headers['authorization'];
+  if (authHeader == undefined)
+    return new Result(new Error('Not authorized'), 401);
+
+  // format: bearer <token>
+  const a = authHeader.split(' ');
+  if (a.length != 2)
+    return new Result(new Error('Not authorized'), 401);
+  
+  const token = a[1];
+  const claims = JWT.decode(token, JWTActionType.userAccess);
+  if (claims == undefined)
+    return new Result(new Error('Not authorized'), 401);
+  return new Result(claims, 200);
+}
+
+function setRefreshTokenCookie(res: Response, token: string) {
+  const refreshExpiration = JWT.refreshExpiration();
+  res.cookie(
+    process.env.REFRESH_TOKEN_NAME!,
+    token,
+    {
+      domain: process.env.REFRESH_TOKEN_DOMAIN!,
+      secure: process.env.REFRESH_TOKEN_SECURE! == 'true',
+      httpOnly: process.env.REFRESH_TOKEN_HTTPONLY! == 'true',
+      expires: refreshExpiration,
+      maxAge: refreshExpiration.getTime(),
+    }
+  );
+
+}
