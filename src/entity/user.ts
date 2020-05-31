@@ -99,7 +99,7 @@ export default class User {
         const refreshToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.refreshAccess);
         if (accessToken == undefined || refreshToken == undefined)
           return new Result<any>(new Error('Login failed'), 500);
-        return new Result<any>({ ukey: user.ukey, access_token: accessToken }, 200);
+        return new Result<any>({ ukey: user.ukey, refresh_token: refreshToken, access_token: accessToken }, 200);
       }
 
       return new Result<any>(new Error('Invalid credentials'), 400);

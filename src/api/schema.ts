@@ -40,14 +40,36 @@ export const root = {
     if (result.isError())
       throw result.getError()!
     const user = result.getObject()!;
-    return { ukey: user.ukey, tmp_confirm_token: 'tmpConfirmToken' };
+    const confirmToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.confirmUser);
+    if (confirmToken == undefined) {
+      context.res.status(500);
+      throw new Error('Confirmation failed');
+    }
+    return { ukey: user.ukey, tmp_confirm_token: confirmToken };
   },
 
   confirm: async ({ email }: { email: string }, context: any) => {
-    const user = await User.getByEmail(email);
+    const result = parseAccessToken(context.req);
+    if (result.isError()) {
+      context.res.status(result.status);
+      throw result.getError()!;
+    }
+
+    const claims = result.getObject()!;
+    if (claims.act != JWTActionType.confirmUser) {
+      context.res.status(401);
+      throw new Error('Not authorized');
+    }
+
+    const user = await User.getByUserKey(claims.uky);
     if (user == undefined) {
       context.res.status(404);
       throw new Error('User not found');
+    }
+
+    if (email != user.email) {
+      context.res.status(401);
+      throw new Error('Not authorized');
     }
 
     if (user.confirmed) {
@@ -71,17 +93,63 @@ export const root = {
     context.res.status(result.status);
     if (result.isError())
       throw result.getError()!;
-    return result.getObject()!;
+    const data = result.getObject()!;
+    setRefreshTokenCookie(context.res, data.refresh_token);
+    return data;
   },
 
-  profile: async ({ ukey }: { ukey: string }, context: any) => {
-    const user = await User.getByUserKey(ukey);
+  profile: async ({ }: {}, context: any) => {
+    const result = parseAccessToken(context.req);
+    if (result.isError()) {
+      context.res.status(result.status);
+      throw result.getError()!;
+    }
+
+    const claims = result.getObject()!;
+    const user = await User.getByUserKey(claims.uky);
+
     if (user == undefined) {
       context.res.status(404);
       throw new Error('Invalid user');
     }
     return user;
   },
+
+  refresh: async ({ }: {}, context: any) => {
+    const token = context.req.cookies[process.env.REFRESH_TOKEN_NAME!];
+    context.res.status(401);
+    if (token == undefined)
+      throw new Error('Not authorized');
+
+    const claims = JWT.decode(token, JWTActionType.refreshAccess);
+    if (claims == undefined)
+      throw new Error('Not authorized');
+
+    const user = await User.getByUserKey(claims.uky);
+    if (user == undefined)
+      throw new Error('Not authorized');
+
+    if (user.refreshIndex != claims.rti)
+      throw new Error('Not authorized');
+
+    user.refreshIndex = user.refreshIndex + 1;
+    const success = await user.save();
+    if (!success) {
+      context.res.status(500);
+      throw new Error('Refresh failed');
+    }
+
+    const refreshToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.refreshAccess);
+    const accessToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.userAccess);
+    if (refreshToken == undefined || accessToken == undefined) {
+      context.res.status(500);
+      throw new Error('Refresh failed');
+    }
+
+    setRefreshTokenCookie(context.res, refreshToken);
+    context.res.status(200);
+    return { ukey: user.ukey, access_token: accessToken };
+  }
 };
 
 function parseAccessToken(req: Request): Result<any> {
@@ -93,7 +161,7 @@ function parseAccessToken(req: Request): Result<any> {
   const a = authHeader.split(' ');
   if (a.length != 2)
     return new Result(new Error('Not authorized'), 401);
-  
+
   const token = a[1];
   const claims = JWT.decode(token, JWTActionType.userAccess);
   if (claims == undefined)
