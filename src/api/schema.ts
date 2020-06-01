@@ -1,8 +1,8 @@
 import { buildSchema } from 'graphql';
 import User from '../entity/user';
-import { JWT, JWTActionType } from '../utils/jwt';
 import { parseAccessToken, setRefreshTokenCookie, handlePasswordChange, handleSendEmailRequest } from './helpers';
 import Mailer from '../utils/mailer';
+import Access from '../entity/access';
 
 export const schema = buildSchema(`
   type Query {
@@ -47,7 +47,7 @@ export const root = {
     if (result.isError())
       throw result.getError()!
     const user = result.getObject()!;
-    const confirmToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.confirmUser);
+    const confirmToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_CONFIRM!);
     if (confirmToken == undefined) {
       context.res.status(500);
       throw new Error('Confirmation failed');
@@ -57,18 +57,19 @@ export const root = {
   },
 
   resendConfirmation: async ({ email }: { email: string }, context: any) => {
-    return await handleSendEmailRequest(email, context.res, true);
+    return await handleSendEmailRequest(email, context.res, true, process.env.ACCESS_TYPE_CONFIRM!);
   },
 
   confirm: async ({ email }: { email: string }, context: any) => {
-    let result = parseAccessToken(context.req);
+    const accessId = Access.idFromName(process.env.ACCESS_TYPE_CONFIRM!);
+    let result = parseAccessToken(context.req, accessId);
     if (result.isError()) {
       context.res.status(result.status);
       throw result.getError()!;
     }
 
     const claims = result.getObject()!;
-    if (claims.act != JWTActionType.confirmUser) {
+    if (claims.act != accessId) {
       context.res.status(401);
       throw new Error('Not authorized');
     }
@@ -99,13 +100,25 @@ export const root = {
     context.res.status(result.status);
     if (result.isError())
       throw result.getError()!;
-    const data = result.getObject()!;
-    setRefreshTokenCookie(context.res, data.refresh_token);
-    return data;
+
+    const user = result.getObject()!;
+    const accessToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_USER!);
+    const refreshToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_REFRESH!);
+
+    if (accessToken == undefined || refreshToken == undefined) {
+      context.res.status(500);
+      throw new Error('Login failed');
+    }
+
+    setRefreshTokenCookie(context.res, refreshToken);
+    context.res.status(200);
+
+    return { ukey: user.ukey, refresh_token: refreshToken, access_token: accessToken };
   },
 
   profile: async ({ }: {}, context: any) => {
-    const result = parseAccessToken(context.req);
+    const accessId = Access.idFromName(process.env.ACCESS_TYPE_USER!);
+    const result = parseAccessToken(context.req, accessId);
     if (result.isError()) {
       context.res.status(result.status);
       throw result.getError()!;
@@ -127,7 +140,7 @@ export const root = {
     if (token == undefined)
       throw new Error('Not authorized');
 
-    const claims = JWT.decode(token, JWTActionType.refreshAccess);
+    const claims = Access.decode(token, Access.idFromName(process.env.ACCESS_TYPE_REFRESH!));
     if (claims == undefined)
       throw new Error('Not authorized');
 
@@ -142,8 +155,8 @@ export const root = {
     }
     user.refreshIndex += 1;
 
-    const refreshToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.refreshAccess);
-    const accessToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.userAccess);
+    const refreshToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_REFRESH!);
+    const accessToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_REFRESH!);
     if (refreshToken == undefined || accessToken == undefined) {
       context.res.status(500);
       throw new Error('Refresh failed');
@@ -155,11 +168,12 @@ export const root = {
   },
 
   forgotPassword: async ({ email }: { email: string }, context: any) => {
-    return await handleSendEmailRequest(email, context.res, false);
+    return await handleSendEmailRequest(email, context.res, false, process.env.ACCESS_TYPE_PASSWORD_RESET!);
   },
 
   resetPassword: async ({ password, confirmation }: { password: string, confirmation: string }, context: any) => {
-    return await handlePasswordChange(undefined, password, confirmation, context.req, context.res, true);
+    const accessId = Access.idFromName(process.env.ACCESS_TYPE_PASSWORD_RESET!);
+    return await handlePasswordChange(undefined, password, confirmation, context.req, context.res, accessId);
   },
 
 };

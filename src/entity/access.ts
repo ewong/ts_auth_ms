@@ -7,7 +7,7 @@ const accessNames: string[] = [];
 const accessItems: Access[] = [];
 
 @Entity()
-export class Access {
+export default class Access {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -91,7 +91,7 @@ export class Access {
     }
   }
 
-  static refreshExpiration() {
+  static refreshExpiration(): Date {
     if (!accessNames.includes(process.env.ACCESS_TYPE_REFRESH!))
       throw new Error('ACCESS_TYPE_REFRESH name not defined in database');
     const position = accessNames.indexOf(process.env.ACCESS_TYPE_REFRESH!);
@@ -99,6 +99,13 @@ export class Access {
     const d = new Date();
     d.setDate(d.getDate() + accessItem.duration);
     return d;
+  }
+
+  static idFromName(name: string): number {
+    if (!accessNames.indexOf(name))
+      throw new Error(`Access name "${name}" not defined in database`);
+    const position = accessNames.indexOf(name);
+    return accessIds[position];
   }
 
   expiresIn(): string {

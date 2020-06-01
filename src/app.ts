@@ -4,9 +4,11 @@ import dotenv from 'dotenv';
 import { schema, root } from './api/schema';
 import { createConnection } from 'typeorm';
 import cookieParser from 'cookie-parser';
+import Access from './entity/access';
 
 dotenv.config();
 createConnection().then(async connection => {
+  await Access.load();
   const app = express();
   app.use(express.json());
   app.use(cookieParser());

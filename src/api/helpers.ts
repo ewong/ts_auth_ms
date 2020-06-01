@@ -1,10 +1,10 @@
-import { JWT, JWTActionType } from '../utils/jwt';
 import { Request, Response } from 'express';
 import Result from '../model/result';
 import User from '../entity/user';
 import Mailer from '../utils/mailer';
+import Access from '../entity/access';
 
-export function parseAccessToken(req: Request): Result<any> {
+export function parseAccessToken(req: Request, accessId: number): Result<any> {
   const authHeader = req.headers['authorization'];
   if (authHeader == undefined)
     return new Result(new Error('Not authorized'), 401);
@@ -15,14 +15,14 @@ export function parseAccessToken(req: Request): Result<any> {
     return new Result(new Error('Not authorized'), 401);
 
   const token = a[1];
-  const claims = JWT.decode(token, JWTActionType.userAccess);
+  const claims = Access.decode(token, accessId);
   if (claims == undefined)
     return new Result(new Error('Not authorized'), 401);
   return new Result(claims, 200);
 }
 
 export function setRefreshTokenCookie(res: Response, token: string) {
-  const refreshExpiration = JWT.refreshExpiration();
+  const refreshExpiration = Access.refreshExpiration();
   res.cookie(
     process.env.REFRESH_TOKEN_NAME!,
     token,
@@ -36,7 +36,7 @@ export function setRefreshTokenCookie(res: Response, token: string) {
   );
 }
 
-export async function handleSendEmailRequest(email: string, res: Response, isConfirmation: boolean): Promise<any> {
+export async function handleSendEmailRequest(email: string, res: Response, isConfirmation: boolean, accessName: string): Promise<any> {
   const user = await User.getByEmail(email);
   if (user == undefined) {
     res.status(404);
@@ -48,9 +48,7 @@ export async function handleSendEmailRequest(email: string, res: Response, isCon
     throw new Error('User already confirmed');
   }
 
-  const type = isConfirmation ? JWTActionType.confirmUser : JWTActionType.forgotPassword;
-  const token = JWT.encode(user.ukey, user.refreshIndex, type);
-
+  const token = Access.encode(user.ukey, user.refreshIndex, accessName);
   if (token == undefined) {
     res.status(500);
     throw new Error('Server error');
@@ -61,21 +59,20 @@ export async function handleSendEmailRequest(email: string, res: Response, isCon
   return { tmp_email_token: token };
 }
 
-export async function handlePasswordChange(oldPassword: string | undefined, newPassword: string, confirmation: string, req: Request, res: Response, isForgotPassword: boolean): Promise<boolean> {
+export async function handlePasswordChange(oldPassword: string | undefined, newPassword: string, confirmation: string, req: Request, res: Response, accessId: number): Promise<boolean> {
   if (newPassword != confirmation) {
     res.status(400);
     throw new Error('Passwords do not match');
   }
 
-  let result = parseAccessToken(req);
+  let result = parseAccessToken(req, accessId);
   if (result.isError()) {
     res.status(result.status);
     throw result.getError()!;
   }
 
   const claims = result.getObject()!;
-  const type = isForgotPassword ? JWTActionType.forgotPassword : JWTActionType.userAccess;
-  if (claims.act != type) {
+  if (claims.act != accessId) {
     res.status(401);
     throw new Error('Not authorized');
   }

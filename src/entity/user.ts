@@ -3,7 +3,6 @@ import Result from '../model/result';
 import { hash, compare } from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { Entity, PrimaryGeneratedColumn, Index, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
-import { JWT, JWTActionType } from '../utils/jwt';
 
 @Entity('users')
 export default class User {
@@ -69,7 +68,7 @@ export default class User {
     }
   }
 
-  static async login(email: string, password: string): Promise<Result<any>> {
+  static async login(email: string, password: string): Promise<Result<User>> {
     const user = await User.getByEmail(email);
     if (user == undefined)
       return new Result<any>(new Error('Invalid credentials'), 400);
@@ -79,15 +78,15 @@ export default class User {
 
     try {
       const valid = await compare(password, user.password);
-      if (valid) {
-        const accessToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.userAccess);
-        const refreshToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.refreshAccess);
-        if (accessToken == undefined || refreshToken == undefined)
-          return new Result<any>(new Error('Login failed'), 500);
-        return new Result<any>({ ukey: user.ukey, refresh_token: refreshToken, access_token: accessToken }, 200);
-      }
-
-      return new Result<any>(new Error('Invalid credentials'), 400);
+      // if (valid) {
+      //   const accessToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.userAccess);
+      //   const refreshToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.refreshAccess);
+      //   if (accessToken == undefined || refreshToken == undefined)
+      //     return new Result<any>(new Error('Login failed'), 500);
+      //   return new Result<any>({ ukey: user.ukey, refresh_token: refreshToken, access_token: accessToken }, 200);
+      // }
+      // return new Result<any>(new Error('Invalid credentials'), 400);
+      return valid ? new Result(user, 200) : new Result<any>(new Error('Invalid credentials'), 400);
     } catch (err) {
       console.log(err);
       return new Result<any>(new Error('Login failed'), 500);
