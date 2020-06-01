@@ -48,21 +48,6 @@ export default class User {
     this.updatedAt = new Date();
   }
 
-  static async getByUserKey(ukey: string): Promise<User | undefined> {
-    const db = new Database<User>(User);
-    return await db.get({ ukey });
-  }
-
-  static async getByEmail(email: string): Promise<User | undefined> {
-    const db = new Database<User>(User);
-    return await db.get({ email });
-  }
-
-  async save(): Promise<boolean> {
-    const db = new Database<User>(User);
-    return await db.save(this);
-  }
-
   static async register(email: string, password: string, confirmation: string): Promise<Result<User>> {
     if (password != confirmation)
       return new Result<User>(new Error('Passwords do not match'), 400);
@@ -109,4 +94,28 @@ export default class User {
     }
   }
 
+  static async getByUserKey(ukey: string, refreshIndex: number): Promise<User | undefined> {
+    const db = new Database<User>(User);
+    const user = await db.get({ ukey });
+    return user == undefined || user.refreshIndex != refreshIndex ? undefined : user;
+  }
+
+  static async getByEmail(email: string): Promise<User | undefined> {
+    const db = new Database<User>(User);
+    return await db.get({ email });
+  }
+
+  async save(): Promise<boolean> {
+    const db = new Database<User>(User);
+    return await db.save(this);
+  }
+
+  async updatePassword(oldPassword: string | undefined, newPassword: string): Promise<Result<boolean>> {
+    // change password scenario
+    if (oldPassword != undefined && oldPassword == newPassword)
+      return new Result<boolean>(new Error('No password change'), 400);
+    const hpass = await hash(newPassword, 12);
+    this.password = hpass;
+    return await this.save() ? new Result<boolean>(true, 200) : new Result<boolean>(new Error('Update passwordfailed'), 500);
+  }
 }

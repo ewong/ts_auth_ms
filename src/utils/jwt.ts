@@ -4,6 +4,7 @@ export const JWTActionType = {
   userAccess: 0,
   refreshAccess: 1,
   confirmUser: 2,
+  forgotPassword: 3,
 };
 
 class JWTAction {
@@ -12,7 +13,7 @@ class JWTAction {
   secret?: string;
 
   constructor(type: number) {
-    const types = ['userAccess', 'refreshAccess', 'confirmUser'];
+    const types = ['userAccess', 'refreshAccess', 'confirmUser', 'forgotPassword'];
 
     if (type < 0 || type >= types.length) {
       this.type = undefined;
