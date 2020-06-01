@@ -110,12 +110,33 @@ export default class User {
     return await db.save(this);
   }
 
+  async updateConfirmed(): Promise<Result<boolean>> {
+    if (this.confirmed)
+      return new Result<boolean>(new Error('Already confirmed'), 401);
+    const values = { confirmed: true };
+    const filter = `id = ${this.id}`;
+    const db = new Database<User>(User);
+    const success = await db.update('users', values, filter);
+    return success ? new Result<boolean>(true, 200) : new Result<boolean>(new Error('Confirmation failed'), 500);
+  }
+
   async updatePassword(oldPassword: string | undefined, newPassword: string): Promise<Result<boolean>> {
     // change password scenario
     if (oldPassword != undefined && oldPassword == newPassword)
       return new Result<boolean>(new Error('No password change'), 400);
     const hpass = await hash(newPassword, 12);
-    this.password = hpass;
-    return await this.save() ? new Result<boolean>(true, 200) : new Result<boolean>(new Error('Update passwordfailed'), 500);
+    const values = { password: hpass };
+    const filter = `id = ${this.id}`;
+    const db = new Database<User>(User);
+    const success = await db.update('users', values, filter);
+    return success ? new Result<boolean>(true, 200) : new Result<boolean>(new Error('Update password failed'), 500);
+  }
+
+  async updateRefreshIndex(): Promise<Result<boolean>> {
+    const values = { refreshIndex: () => 'refresh_index + 1' };
+    const filter = `id = ${this.id}`;
+    const db = new Database<User>(User);
+    const success = await db.update('users', values, filter);
+    return success ? new Result(true, 200) : new Result<boolean>(new Error('Refresh failed'), 500);
   }
 }

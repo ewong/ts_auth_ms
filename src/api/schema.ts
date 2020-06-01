@@ -61,7 +61,7 @@ export const root = {
   },
 
   confirm: async ({ email }: { email: string }, context: any) => {
-    const result = parseAccessToken(context.req);
+    let result = parseAccessToken(context.req);
     if (result.isError()) {
       context.res.status(result.status);
       throw result.getError()!;
@@ -84,16 +84,10 @@ export const root = {
       throw new Error('Not authorized');
     }
 
-    if (user.confirmed) {
-      context.res.status(400);
-      throw new Error('User already confirmed');
-    }
-
-    user.confirmed = true;
-    const success = await user.save();
-    if (!success) {
-      context.res.status(500);
-      throw new Error('Confirmation failed');
+    result = await user.updateConfirmed();
+    if (result.isError()) {
+      context.res.status(result.status);
+      throw result.getError()!;
     }
 
     context.res.status(200);
@@ -141,12 +135,12 @@ export const root = {
     if (user == undefined)
       throw new Error('Not authorized');
 
-    user.refreshIndex = user.refreshIndex + 1;
-    const success = await user.save();
-    if (!success) {
-      context.res.status(500);
-      throw new Error('Refresh failed');
+    const result = await user.updateRefreshIndex();
+    if (result.isError()) {
+      context.res.status(result.status);
+      throw result.getError()!;
     }
+    user.refreshIndex += 1;
 
     const refreshToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.refreshAccess);
     const accessToken = JWT.encode(user.ukey, user.refreshIndex, JWTActionType.userAccess);

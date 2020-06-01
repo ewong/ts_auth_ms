@@ -7,7 +7,7 @@ export default class Database<T> {
     this.repo = getManager().getRepository(entityClass);
   }
 
-  async save(entity: T) {
+  async save(entity: T): Promise<boolean> {
     try {
       await this.repo.save(entity);
       return true;
@@ -15,6 +15,16 @@ export default class Database<T> {
       console.log(err);
       return false;
     }
+  }
+
+  async update(table: string, values: object, filter: string): Promise<boolean> {
+    const result = await this.repo
+      .createQueryBuilder(table)
+      .update()
+      .set(values)
+      .where(filter)
+      .execute();
+    return result.affected != undefined && result.affected > 0;
   }
 
   async get(filter: object) {
