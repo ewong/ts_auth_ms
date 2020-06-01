@@ -27,7 +27,7 @@ export default class Database<T> {
     return result.affected != undefined && result.affected > 0;
   }
 
-  async get(filter: object) {
+  async get(filter: object): Promise<T | undefined> {
     try {
       // e.g. filter = { ukey: '123-abc' };
       return await this.repo.findOne(filter);
@@ -37,4 +37,12 @@ export default class Database<T> {
     }
   }
 
+  async all(): Promise<T[] | undefined> {
+    try {
+      return await this.repo.find();
+    } catch (err) {
+      console.log(err);
+      return undefined;
+    }
+  }
 }
