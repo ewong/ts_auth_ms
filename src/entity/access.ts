@@ -17,7 +17,7 @@ export default class Access {
   @Column({ nullable: false })
   duration: number;
 
-  @Column({ nullable: false, default: 'm' })
+  @Column({ name: 'duration_unit', nullable: false, default: 'm' })
   durationUnit: string;
 
   @Column({ nullable: false, unique: true })
@@ -43,7 +43,7 @@ export default class Access {
     const a = await d.all();
 
     if (a == undefined)
-      throw new Error('No Access definitions found in database');
+      return;
 
     a.forEach(x => {
       accessIds.push(x.id);
