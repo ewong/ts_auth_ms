@@ -102,7 +102,7 @@ export default class Access {
   }
 
   static idFromName(name: string): number {
-    if (!accessNames.indexOf(name))
+    if (!accessNames.includes(name))
       throw new Error(`Access name "${name}" not defined in database`);
     const position = accessNames.indexOf(name);
     return accessIds[position];

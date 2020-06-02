@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Result from '../model/result';
+import Result from '../utils/result';
 import User from '../entity/user';
 import Mailer from '../utils/mailer';
 import Access from '../entity/access';

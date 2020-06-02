@@ -1,5 +1,5 @@
 import Database from '../utils/database';
-import Result from '../model/result';
+import Result from '../utils/result';
 import { hash, compare } from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { Entity, PrimaryGeneratedColumn, Index, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';

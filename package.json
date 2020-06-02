@@ -8,7 +8,8 @@
     "dev": "nodemon src/app.ts",
     "build": "tsc -p .",
     "migrate": "ts-node ./node_modules/typeorm/cli.js migration:run",
-    "revert": "ts-node ./node_modules/typeorm/cli.js migration:revert"
+    "revert": "ts-node ./node_modules/typeorm/cli.js migration:revert",
+    "initdb": "dropdb db_dev; createdb -E UTF8 db_dev;"
   },
   "keywords": [],
   "author": "",
