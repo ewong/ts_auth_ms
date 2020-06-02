@@ -18,13 +18,18 @@ export default class Database<T> {
   }
 
   async update(table: string, values: object, filter: string): Promise<boolean> {
-    const result = await this.repo
-      .createQueryBuilder(table)
-      .update()
-      .set(values)
-      .where(filter)
-      .execute();
-    return result.affected != undefined && result.affected > 0;
+    try {
+      const result = await this.repo
+        .createQueryBuilder(table)
+        .update()
+        .set(values)
+        .where(filter)
+        .execute();
+      return result.affected != undefined && result.affected > 0;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
   }
 
   async get(filter: object): Promise<T | undefined> {
@@ -39,7 +44,8 @@ export default class Database<T> {
 
   async all(): Promise<T[] | undefined> {
     try {
-      return await this.repo.find();
+      const rows = await this.repo.find();
+      return rows;
     } catch (err) {
       console.log(err);
       return undefined;
