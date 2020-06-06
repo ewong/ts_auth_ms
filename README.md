@@ -3,6 +3,12 @@ JWT authentication microservice using Typescript, ExpressJS, Typeorm &amp; Postg
 
 RELEASE NOTES
 
+VERSION 0.3.0
+- Convert JWT class, JWTAction clas & JWTActionType enum to Access class.
+- Created Mailer class stub.
+- Updated Database & User classes.
+- Created new handlers (forgotPassword, resendConfirmation, resetPassword) in schema.ts.
+
 VERSION 0.2.0
 - JWT access control introduced.
 - JWT class & JWTActionType enum implements access control.
