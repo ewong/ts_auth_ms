@@ -5,14 +5,19 @@ import { schema, root } from './api/schema';
 import { createConnection } from 'typeorm';
 import cookieParser from 'cookie-parser';
 import Access from './entity/access';
+import cors from 'cors';
 
 dotenv.config();
 createConnection().then(async connection => {
   await Access.load();
   const app = express();
+  const corsOptions = {
+    origin: process.env.CORS_ORIGIN!,
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  };
+  app.use(cors(corsOptions));
   app.use(express.json());
   app.use(cookieParser());
-
   app.use(process.env.GRAPHQL_PATH!, graphqlHTTP((request, response, graphQLParams) => ({
     schema: schema,
     rootValue: root,

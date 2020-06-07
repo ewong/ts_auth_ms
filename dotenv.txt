@@ -15,3 +15,5 @@ REFRESH_TOKEN_SECURE=false
 
 CONFIRMATION_URL=http://127.0.0.1:4000/confirm/
 FORGOT_PASSWORD_URL=http://127.0.0.1:4000/reset-password/
+
+CORS_ORIGIN=http://localhost:3000
