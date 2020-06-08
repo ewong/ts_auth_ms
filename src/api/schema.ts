@@ -156,7 +156,7 @@ export const root = {
     user.refreshIndex += 1;
 
     const refreshToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_REFRESH!);
-    const accessToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_REFRESH!);
+    const accessToken = Access.encode(user.ukey, user.refreshIndex, process.env.ACCESS_TYPE_USER!);
     if (refreshToken == undefined || accessToken == undefined) {
       context.res.status(500);
       throw new Error('Refresh failed');
