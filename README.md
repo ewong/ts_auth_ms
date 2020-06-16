@@ -3,6 +3,10 @@ JWT authentication microservice using Typescript, ExpressJS, Typeorm &amp; Postg
 
 RELEASE NOTES
 
+VERSION 0.3.1
+- Added CORS
+- Temporarily set confirmed = true in user.ts constructor.
+
 VERSION 0.3.0
 - Convert JWT class, JWTAction clas & JWTActionType enum to Access class.
 - Created Mailer class stub.
