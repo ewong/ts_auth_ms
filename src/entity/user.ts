@@ -41,7 +41,7 @@ export default class User {
     this.ukey = "";
     this.email = email;
     this.password = password;
-    this.confirmed = true;
+    this.confirmed = false;
     this.refreshIndex = refreshIndex;
     this.createdAt = new Date();
     this.updatedAt = new Date();
