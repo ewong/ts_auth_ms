@@ -7,15 +7,15 @@ import Access from '../entity/access';
 export const schema = buildSchema(`
   type Query {
     profile: Profile
-    resendConfirmation(email: String!): TmpEmailResponse
-    forgotPassword(email: String!): TmpEmailResponse
   }
 
   type Mutation {
     register(email: String!, password: String!, confirmation: String!): RegisteredUser
     login(email: String!, password: String!): AccessToken
+    resendConfirmation(email: String!): TmpEmailResponse
     confirm(email: String!): Boolean
     refresh: AccessToken
+    forgotPassword(email: String!): TmpEmailResponse
     resetPassword(password: String!, confirmation: String!): Boolean
   }
 
