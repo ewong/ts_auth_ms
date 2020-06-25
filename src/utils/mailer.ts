@@ -23,7 +23,6 @@ export default class Mailer {
 
   static async send(msg: any): Promise<boolean> {
     try {
-      console.log(process.env.SENDGRID_API_KEY!);
       sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
       await sgMail.send(msg);
       return true;

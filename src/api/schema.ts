@@ -10,12 +10,12 @@ export const schema = buildSchema(`
   }
 
   type Mutation {
-    register(email: String!, password: String!, confirmation: String!): RegisteredUser
+    register(email: String!, password: String!, confirmation: String!): Boolean
     login(email: String!, password: String!): AccessToken
-    resendConfirmation(email: String!): TmpEmailResponse
+    resendConfirmation(email: String!): Boolean
     confirm(email: String!): Boolean
     refresh: AccessToken
-    forgotPassword(email: String!): TmpEmailResponse
+    forgotPassword(email: String!): Boolean
     resetPassword(password: String!, confirmation: String!): Boolean
     logout: Boolean
   }
@@ -25,18 +25,9 @@ export const schema = buildSchema(`
     email: String
   }
 
-  type RegisteredUser {
-    ukey: ID
-    tmp_confirm_token: ID
-  }
-
   type AccessToken {
     ukey: ID
     access_token: ID
-  }
-
-  type TmpEmailResponse {
-    tmp_email_token: ID
   }
 
 `);
@@ -56,7 +47,7 @@ export const root = {
 
     // todo: replace this with queue + mail server implementation
     await Mailer.sendConfirmation(user.email, confirmToken);
-    return { ukey: user.ukey, tmp_confirm_token: confirmToken };
+    return true;
   },
 
   resendConfirmation: async ({ email }: { email: string }, context: any) => {

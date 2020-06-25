@@ -62,7 +62,7 @@ export async function handleSendEmailRequest(email: string, res: Response, isCon
   }
   
   res.status(200);
-  return { tmp_email_token: token };
+  return true;
 }
 
 export async function handlePasswordChange(oldPassword: string | undefined, newPassword: string, confirmation: string, req: Request, res: Response, accessId: number): Promise<boolean> {
