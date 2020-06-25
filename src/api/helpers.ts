@@ -54,7 +54,13 @@ export async function handleSendEmailRequest(email: string, res: Response, isCon
     throw new Error('Server error');
   }
 
-  isConfirmation ? Mailer.sendConfirmation(user.email, token) : Mailer.sendForgotPassword(user.email, token);
+  const success = await (isConfirmation ? Mailer.sendConfirmation(user.email, token) : Mailer.sendForgotPassword(user.email, token));
+  if (!success) {
+    console.log('resend error!');
+    res.status(500);
+    throw new Error('Server error');
+  }
+  
   res.status(200);
   return { tmp_email_token: token };
 }

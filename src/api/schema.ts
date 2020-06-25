@@ -53,7 +53,9 @@ export const root = {
       context.res.status(500);
       throw new Error('Confirmation failed');
     }
-    Mailer.sendConfirmation(user.email, confirmToken);
+
+    // todo: replace this with queue + mail server implementation
+    await Mailer.sendConfirmation(user.email, confirmToken);
     return { ukey: user.ukey, tmp_confirm_token: confirmToken };
   },
 
