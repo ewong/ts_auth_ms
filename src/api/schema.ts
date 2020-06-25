@@ -17,6 +17,7 @@ export const schema = buildSchema(`
     refresh: AccessToken
     forgotPassword(email: String!): TmpEmailResponse
     resetPassword(password: String!, confirmation: String!): Boolean
+    logout: Boolean
   }
 
   type Profile {
@@ -176,4 +177,22 @@ export const root = {
     return await handlePasswordChange(undefined, password, confirmation, context.req, context.res, accessId);
   },
 
+  logout: async ({ }: {}, context: any) => {
+    const result = parseAccessToken(context.req, Access.idFromName(process.env.ACCESS_TYPE_USER!));
+    context.res.status(401);
+    if (result.isError())
+      throw new Error('Not authorized');
+
+    const token = context.req.cookies[process.env.REFRESH_TOKEN_NAME!];
+    if (token == undefined)
+      throw new Error('Not authorized');
+
+    const claims = Access.decode(token, Access.idFromName(process.env.ACCESS_TYPE_REFRESH!));
+    if (claims == undefined)
+      throw new Error('Not authorized');
+
+    context.res.status(200);
+    context.res.clearCookie(process.env.REFRESH_TOKEN_NAME!);
+    return true;
+  },
 };
