@@ -1,13 +1,15 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { response } from 'express';
 import graphqlHTTP from 'express-graphql';
-import dotenv from 'dotenv';
-import { schema, root } from './api/schema';
-import { createConnection } from 'typeorm';
 import cookieParser from 'cookie-parser';
 import Access from './entity/access';
 import cors from 'cors';
 
-dotenv.config();
+import { createConnection } from 'typeorm';
+import { schema, root } from './api/schema';
+
 createConnection().then(async connection => {
   await Access.load();
   const app = express();

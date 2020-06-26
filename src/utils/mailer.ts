@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export default class Mailer {
   static async sendConfirmation(email: string, token: string): Promise<boolean> {
@@ -23,7 +24,6 @@ export default class Mailer {
 
   static async send(msg: any): Promise<boolean> {
     try {
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
       await sgMail.send(msg);
       return true;
     } catch (err) {
