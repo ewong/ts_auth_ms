@@ -54,6 +54,7 @@ export async function handleSendEmailRequest(email: string, res: Response, isCon
     throw new Error('Server error');
   }
 
+  // todo: implement queue to send mail
   const success = await (isConfirmation ? Mailer.sendConfirmation(user.email, token) : Mailer.sendForgotPassword(user.email, token));
   if (!success) {
     console.log('resend error!');

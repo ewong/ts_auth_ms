@@ -12,14 +12,14 @@ export default class Mailer {
     return await this.send(msg);
   }
 
-  static sendForgotPassword(email: string, token: string): Promise<boolean> {
+  static async sendForgotPassword(email: string, token: string): Promise<boolean> {
     const msg = {
       to: email,
       from: process.env.SENDGRID_FROM_EMAIL!,
       templateId: process.env.SENDGRID_FORGOT_PASSWORD_TEMPLATE_ID!,
       dynamic_template_data: { password_token: token }
     };
-    return this.send(msg);
+    return await this.send(msg);
   }
 
   static async send(msg: any): Promise<boolean> {
